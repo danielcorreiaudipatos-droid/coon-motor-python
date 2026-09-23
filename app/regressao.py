@@ -105,8 +105,9 @@ def calcular_regressao(amostras) -> dict:
     r2_adj = 1 - (1 - r2) * (n - 1) / (n - k - 1) if n > k + 1 else 0.0
     ep = float(np.sqrt(SQR / (n - k - 1))) if n > k + 1 else 0.0
 
-    # Teste F global
-    f_calc = (SQE / k) / (SQR / (n - k - 1)) if n > k + 1 and SQR > 0 else 0.0
+    # Teste F global (proteção contra divisão por zero quando R²≈1)
+    denom_f = SQR / (n - k - 1) if n > k + 1 else 0.0
+    f_calc = float((SQE / k) / denom_f) if denom_f > 1e-10 else 9999.9999
     f_crit = float(stats.f.ppf(0.90, dfn=k, dfd=n - k - 1))  # α=10%
     sig = f_calc > f_crit
 

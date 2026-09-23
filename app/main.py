@@ -1,11 +1,23 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import numpy as np
 from scipy import stats
+import math, json
 from .regressao import calcular_regressao
 
 app = FastAPI(title="CO.ON Motor Estatístico", version="1.0.0")
+
+def _sanitize(obj):
+    """Substitui inf/nan por null — FastAPI usa json padrão que falha com esses valores."""
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize(v) for v in obj]
+    if isinstance(obj, float):
+        return None if (math.isnan(obj) or math.isinf(obj)) else obj
+    return obj
 
 class Amostra(BaseModel):
     id: str
@@ -37,6 +49,6 @@ def regressao(req: RegressaoRequest):
 
     try:
         resultado = calcular_regressao(req.amostras)
-        return resultado
+        return JSONResponse(content=_sanitize(resultado))
     except Exception as e:
         raise HTTPException(422, str(e))
