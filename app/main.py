@@ -10,11 +10,17 @@ from .regressao import calcular_regressao
 app = FastAPI(title="CO.ON Motor Estatístico", version="1.0.0")
 
 def _sanitize(obj):
-    """Substitui inf/nan por null — FastAPI usa json padrão que falha com esses valores."""
+    """Converte tipos numpy e substitui inf/nan — json padrão falha com esses valores."""
     if isinstance(obj, dict):
         return {k: _sanitize(v) for k, v in obj.items()}
     if isinstance(obj, list):
         return [_sanitize(v) for v in obj]
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.floating):
+        return None if (math.isnan(obj) or math.isinf(obj)) else float(obj)
     if isinstance(obj, float):
         return None if (math.isnan(obj) or math.isinf(obj)) else obj
     return obj
